@@ -1,0 +1,29 @@
+image: ocaml/opam:debian-11-ocaml-4.14
+
+stages:
+  - lint
+  - test
+  - build
+
+cache:
+  paths:
+    - _opam
+
+before_script:
+  - '[ -d _opam ] || opam switch create --yes --no-install . 4.14.0'
+  - eval $(opam env)
+  - opam install dune
+  - dune build mulua.opam
+  - opam install . --deps-only --with-test --with-doc
+
+build:
+  stage: build
+  coverage: '/\d+\.\d+ % .* coverage/'
+  script:
+    - dune fmt
+    - dune test
+    - dune build
+    - dune build @doc
+  artifacts:
+    paths:
+      - _build
